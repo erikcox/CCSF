@@ -1,5 +1,5 @@
-# CCSF
+# CCSF Library statistics
 
-CCSF reference statistics project
+Statistics and visualization for City College of San Francisco's reference desk.
 
 *TODO: add a better description*
