@@ -7,18 +7,21 @@ import collections
 
 filename = sys.argv[1]
 reader = csv.reader(open(filename))
-separator = "="*80
-category_dict = {}
-location_dict = {}
-content_dict = {}
-time_dict = {}
-one_dict = {}
-three_dict = {}
-five_dict = {}
-ten_dict = {}
-fifteen_dict = {}
 
-def add_id(fn, reader):
+category_dict = {} # request duration category
+location_dict = {} # request location
+content_dict = {} # type of request
+time_dict = {} # request timestamp
+
+one_dict = {} # 1-3 minute requests
+three_dict = {} # 3-5 minute requests
+five_dict = {} # 5-10 minute requests
+ten_dict = {} # 10-15 minute requests
+fifteen_dict = {} # 15+ minute requests
+
+
+# Add a unique id column to a new copy of the csv file
+def add_id_csv(fn, reader):
     f = open(fn)
     data = [item for item in csv.reader(f)]
     f.close()
@@ -41,6 +44,7 @@ def add_id(fn, reader):
     f.close()
 
 
+# Build the dictionaries
 def build_dicts(reader):
     firstline = True
     for rows in reader:
@@ -55,6 +59,7 @@ def build_dicts(reader):
         time_dict[datetime.strptime(rows[0], '%m/%d/%Y %H:%M:%S')] = rows[8]
 
 
+# Print percentage count and values for dictionaries
 def occurrences(input_dict):
     next(reader, None)
     category = Counter(input_dict.values())
@@ -63,9 +68,10 @@ def occurrences(input_dict):
     print "-"*10 + "\t" + "-"*5 + "\t\t\t" + "-"*5
     for c in category.most_common():
         print "{0:.0f}%".format(float(c[1])/total*100) + "\t\t\t" + str(c[1]) + ": \t\t\t" + c[0]
-    print separator
+    print "="*80
 
 
+# Create and initialize 60 slots for each of the time slot dictionaries
 def create_plot_dicts():
     times = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     days = ['A', 'B', 'C', 'D', 'E']
@@ -79,6 +85,7 @@ def create_plot_dicts():
             fifteen_dict[day+str(time)] = 0
 
 
+# Populate each time category dict's time slot with the counts of requests in that time period
 def populate_plot_dicts():
     for key in category_dict:
         hour = key.hour
@@ -86,50 +93,50 @@ def populate_plot_dicts():
         category = category_dict.get(key)[0:3]
         timeslot = get_timeslot(day, hour)
 
-        if category == '1-2':
-            try:
-                one_dict[timeslot] += 1
-                print '1'
-            except:
-               print 'Error: ' + str(timeslot)
-        elif category == '3-5':
-            try:
-                three_dict[timeslot] += 1
-                print '3'
-            except:
-                print 'Error: ' + str(timeslot)
-        elif category == '5-1':
-            try:
-                five_dict[timeslot] += 1
-                print '5'
-            except:
-                print 'Error: ' + str(timeslot)
-        elif category == '10-':
-            try:
-                ten_dict[timeslot] += 1
-                print '10'
-            except:
-                print 'Error: ' + str(timeslot)
-        elif category == '15+':
-            try:
-                fifteen_dict[timeslot] += 1
-                print '15'
-            except:
-                print 'Error: ' + str(timeslot)
+        if timeslot[:1] != 'Z': # Ignore Saturday & Sunday for now
+            if category == '1-2':
+                try:
+                    one_dict[timeslot] += 1
+                except:
+                   print 'ERROR! ***** Category: %s - Hour: %s Day: %s Timeslot: %s' % (category, hour, day, timeslot)
+            elif category == '3-5':
+                try:
+                    three_dict[timeslot] += 1
+                except:
+                    print 'ERROR! ***** Category: %s - Hour: %s Day: %s Timeslot: %s' % (category, hour, day, timeslot)
+            elif category == '5-1':
+                try:
+                    five_dict[timeslot] += 1
+                except:
+                    print 'ERROR! ***** Category: %s - Hour: %s Day: %s Timeslot: %s' % (category, hour, day, timeslot)
+            elif category == '10-':
+                try:
+                    ten_dict[timeslot] += 1
+                except:
+                    print 'ERROR! ***** Category: %s - Hour: %s Day: %s Timeslot: %s' % (category, hour, day, timeslot)
+            elif category == '15+':
+                try:
+                    fifteen_dict[timeslot] += 1
+                except:
+                    print 'ERROR! ***** Category: %s - Hour: %s Day: %s Timeslot: %s' % (category, hour, day, timeslot)
 
 
+# Map the time stamp to the right group (A-E, + 0-11) = (M-F, 8am-7pm)
 def get_timeslot(day, hour):
     timeslot_key = ''
+
     if day == 0:
         timeslot_key = 'A'
     elif day == 1:
-        timeslot_key == 'B'
+        timeslot_key = 'B'
     elif day == 2:
-        timeslot_key == 'C'
+        timeslot_key = 'C'
     elif day == 3:
-        timeslot_key == 'D'
+        timeslot_key = 'D'
     elif day == 4:
-        timeslot_key == 'E'
+        timeslot_key = 'E'
+    else:
+        timeslot_key = 'Z'
 
     if hour == 7 or hour == 8:
         timeslot_key += '0'
@@ -158,8 +165,40 @@ def get_timeslot(day, hour):
 
     return timeslot_key
 
-# Add unique id column to csv file
-add_id(filename, reader)
+
+def build_chart():
+    create_plot_dicts()
+    populate_plot_dicts()
+
+    # Turn the dictionaries into OrderedDict's
+    od_one = collections.OrderedDict(sorted(one_dict.items()))
+    od_three = collections.OrderedDict(sorted(three_dict.items()))
+    od_five = collections.OrderedDict(sorted(five_dict.items()))
+    od_ten = collections.OrderedDict(sorted(ten_dict.items()))
+    od_fifteen = collections.OrderedDict(sorted(fifteen_dict.items()))
+
+    # Plot the chart
+    plt.xkcd()
+
+    x_axis_one = range(0,len(od_one.items()))
+    x_axis_three = range(0,len(od_three.items()))
+    x_axis_five = range(0,len(od_five.items()))
+    x_axis_ten = range(0,len(od_ten.items()))
+    x_axis_fifteen = range(0,len(od_fifteen.items()))
+
+    plt.plot(x_axis_one, od_one.values())
+    plt.plot(x_axis_three, od_three.values())
+    plt.plot(x_axis_one, od_five.values())
+    plt.plot(x_axis_one, od_ten.values())
+    plt.plot(x_axis_one, od_fifteen.values())
+
+    plt.title('Reference stats') # Add week range in title? Date.
+    plt.xlabel('Time')
+    plt.ylabel('Number of requests')
+    plt.show()
+
+# Add unique id column to new csv file and use that  file
+add_id_csv(filename, reader)
 reader = csv.reader(open(filename+'_id.csv'))
 
 # Build dictionaries
@@ -168,26 +207,13 @@ build_dicts(reader)
 # Print out some stats
 occurrences(category_dict)
 occurrences(location_dict)
-occurrences(time_dict)  # TODO: fill in the blank values, match based on timestamp. Update dict, not csv!
+occurrences(time_dict)
 
+# How to get the hour and day of the week:
 # print time_dict.keys()[0].strftime('%H')  # hour
 # print time_dict.keys()[0].strftime('%A')  # weekday
 
-print datetime(2016, 2, 11, 13, 46, 17)
 
-# plt.plot([1,2,3,4])
-# plt.xlabel('Time')
-# plt.ylabel('Number of requests')
-# plt.show()
+# Initialize and populate the dictionaries for the chart
+build_chart()
 
-create_plot_dicts()
-
-od_one = collections.OrderedDict(sorted(one_dict.items()))
-od_three = collections.OrderedDict(sorted(one_dict.items()))
-od_five = collections.OrderedDict(sorted(one_dict.items()))
-od_ten = collections.OrderedDict(sorted(one_dict.items()))
-od_fifteen = collections.OrderedDict(sorted(one_dict.items()))
-# print od_one
-
-populate_plot_dicts()
-print one_dict
