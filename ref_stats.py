@@ -209,11 +209,9 @@ occurrences(category_dict)
 occurrences(location_dict)
 occurrences(time_dict)
 
-# How to get the hour and day of the week:
-# print time_dict.keys()[0].strftime('%H')  # hour
-# print time_dict.keys()[0].strftime('%A')  # weekday
-
-
 # Initialize and populate the dictionaries for the chart
 build_chart()
 
+# How to get the hour and day of the week:
+# print time_dict.keys()[0].strftime('%H')  # hour
+# print time_dict.keys()[0].strftime('%A')  # weekday
