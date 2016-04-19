@@ -188,9 +188,9 @@ def build_chart():
 
     plt.plot(x_axis_one, od_one.values())
     plt.plot(x_axis_three, od_three.values())
-    plt.plot(x_axis_one, od_five.values())
-    plt.plot(x_axis_one, od_ten.values())
-    plt.plot(x_axis_one, od_fifteen.values())
+    plt.plot(x_axis_five, od_five.values())
+    plt.plot(x_axis_ten, od_ten.values())
+    plt.plot(x_axis_fifteen, od_fifteen.values())
 
     plt.title('Reference stats') # Add week range in title? Date.
     plt.xlabel('Time')
