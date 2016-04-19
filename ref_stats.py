@@ -13,11 +13,11 @@ location_dict = {} # request location
 content_dict = {} # type of request
 time_dict = {} # request timestamp
 
-one_dict = {} # 1-3 minute requests
-three_dict = {} # 3-5 minute requests
-five_dict = {} # 5-10 minute requests
-ten_dict = {} # 10-15 minute requests
-fifteen_dict = {} # 15+ minute requests
+one_dict = {}  # 1-2 minute requests
+three_dict = {}  # 3-5 minute requests
+five_dict = {}  # 5-10 minute requests
+ten_dict = {}  # 10-15 minute requests
+fifteen_dict = {}  # 15+ minute requests
 
 
 # Add a unique id column to a new copy of the csv file
@@ -186,15 +186,30 @@ def build_chart():
     x_axis_ten = range(0,len(od_ten.items()))
     x_axis_fifteen = range(0,len(od_fifteen.items()))
 
-    plt.plot(x_axis_one, od_one.values())
-    plt.plot(x_axis_three, od_three.values())
-    plt.plot(x_axis_five, od_five.values())
-    plt.plot(x_axis_ten, od_ten.values())
-    plt.plot(x_axis_fifteen, od_fifteen.values())
+    plt.plot(x_axis_one, od_one.values(), color='blue', label='1-2 min')
+    plt.plot(x_axis_three, od_three.values(), color='orange', label='3-5 min')
+    plt.plot(x_axis_five, od_five.values(), color='purple', label='5-10 min')
+    plt.plot(x_axis_ten, od_ten.values(), color='green', label='10-15 min')
+    plt.plot(x_axis_fifteen, od_fifteen.values(), color='red', label='15+ min')
 
-    plt.title('Reference stats') # Add week range in title? Date.
-    plt.xlabel('Time')
+    plt.title('Reference stats')  # Add week range in title? Date.
+    plt.xlabel('Time (M-F)')
     plt.ylabel('Number of requests')
+
+    # Add the legend
+    legend = plt.legend(loc='best', shadow=True)
+
+    # The frame is matplotlib.patches.Rectangle instance surrounding the legend.
+    frame = legend.get_frame()
+    frame.set_facecolor('0.90')
+
+    # Set the font size
+    for label in legend.get_texts():
+        label.set_fontsize('small')
+
+    for label in legend.get_lines():
+        label.set_linewidth(1.5)  # the legend line width
+
     plt.show()
 
 # Add unique id column to new csv file and use that  file
