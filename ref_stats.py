@@ -72,6 +72,7 @@ def occurrences(input_dict):
 
 
 # Create and initialize 60 slots for each of the time slot dictionaries
+# 12 time slots in a day, 5 days in a week = 60 slots
 def create_plot_dicts():
     times = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     days = ['A', 'B', 'C', 'D', 'E']
@@ -177,20 +178,23 @@ def build_chart():
     od_ten = collections.OrderedDict(sorted(ten_dict.items()))
     od_fifteen = collections.OrderedDict(sorted(fifteen_dict.items()))
 
+    x_datetime = [datetime(2015, 1, i, j) for i in range(1, 6) for j in range(1,13)]
+    print len(x_datetime)
+
     # Plot the chart
     plt.xkcd()
 
-    x_axis_one = range(0,len(od_one.items()))
-    x_axis_three = range(0,len(od_three.items()))
-    x_axis_five = range(0,len(od_five.items()))
-    x_axis_ten = range(0,len(od_ten.items()))
     x_axis_fifteen = range(0,len(od_fifteen.items()))
+    # Use sub-plots. Plot each day (5) individually. You'll have 25 lines. 5 day for each of the 5 request types.
+    # plt.subplot(511) / 521, 531, 541, 551 / number of plots, rows, demos
+    # Switch chart to bar chart (vs. line)
+    # Fn+alt+F7 to see useages
 
-    plt.plot(x_axis_one, od_one.values(), color='blue', label='1-2 min')
-    plt.plot(x_axis_three, od_three.values(), color='orange', label='3-5 min')
-    plt.plot(x_axis_five, od_five.values(), color='purple', label='5-10 min')
-    plt.plot(x_axis_ten, od_ten.values(), color='green', label='10-15 min')
-    plt.plot(x_axis_fifteen, od_fifteen.values(), color='red', label='15+ min')
+    plt.plot(x_datetime, od_one.values(), color='blue', label='1-2 min')
+    plt.plot(x_datetime, od_three.values(), color='orange', label='3-5 min')
+    plt.plot(x_datetime, od_five.values(), color='purple', label='5-10 min')
+    plt.plot(x_datetime, od_ten.values(), color='green', label='10-15 min')
+    plt.plot(x_datetime, od_fifteen.values(), color='red', label='15+ min')
 
     plt.title('Reference stats')  # Add week range in title? Date.
     plt.xlabel('Time (M-F)')
@@ -230,3 +234,4 @@ build_chart()
 # How to get the hour and day of the week:
 # print time_dict.keys()[0].strftime('%H')  # hour
 # print time_dict.keys()[0].strftime('%A')  # weekday
+
