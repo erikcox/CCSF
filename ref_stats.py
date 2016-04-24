@@ -14,7 +14,7 @@ FIVE_MINS = []
 TEN_MINS = []
 FIFTEEN_MINS = []
 FIFTEEN_PLUS_MINS = []
-DAY = "02-23-2016"  # "02-22-2016" #if you want day to be all, put "all"
+DAY = "all"  # Enter single days in format: "02-22-2016". If you want all days , put "all".
 OPEN_HOUR = 7  # 7:45 to be exact
 
 
@@ -132,7 +132,6 @@ def process_request_objs(list_of_request_objects):
     return five_tuple_of_all_lists
 
 
-# TODO: make an everage of weekdays. # requests on a given weekday / number of that weekday in data set
 def build_chart():
     # plt.xkcd()
     two, five, ten, fifteen, fifteen_plus = process_request_objs(REQUEST_OBJS)
@@ -140,16 +139,13 @@ def build_chart():
     x = np.arange(x_axis_length)
     y = np.row_stack((two, five, ten, fifteen, fifteen_plus))
 
-    # fig, ax = plt.subplots()
-    # ax.stackplot(x, y, labels=('1-2', '3-5', '5-10', '10-15', '15+'))
+    plt.stackplot(x, two, color="g", colors="g")
+    plt.stackplot(x, five, color="y", colors="y")
+    plt.stackplot(x, ten, color="b", colors="b")
+    plt.stackplot(x, fifteen, color="r", colors="red")
+    plt.stackplot(x, fifteen_plus, color="000000", colors="000000")
 
-    plt.stackplot(x, two, color="g", colors="g")  # , label="2")
-    plt.stackplot(x, five, color="y", colors="y")  # , label="5")
-    plt.stackplot(x, ten, color="b", colors="b")  # , label="10")
-    plt.stackplot(x, fifteen, color="r", colors="red")  # , label="15")
-    plt.stackplot(x, fifteen_plus, color="000000", colors="000000")  # , label="15+")
-
-    # labels work with plot, but not with stackplot. Build custom legend.
+    # The fill_between() command in stackplot creates a PolyCollection that is not supported by the legend() command.
     two_label = "1-2"
     five_label = "3-5"
     ten_label = "5-10"
@@ -171,3 +167,4 @@ build_objs(reader)
 build_chart()
 
 # TODO: add stats output
+# TODO: plot 5 charts. One for each day of the week, averaged out. Make x-axis label working hours of the day.
