@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import csv
 from datetime import datetime
 
@@ -66,7 +67,7 @@ class RequestObj(object):
         return relevant_times
 
 
-def build_dicts(rdr):
+def build_objs(rdr):
     obj_id = -1
     firstline = True
     for row in rdr:
@@ -87,9 +88,6 @@ def build_dicts(rdr):
                                        time,
                                        obj_id
                                        ))
-
-
-build_dicts(reader)
 
 
 def process_request_objs(list_of_request_objects):
@@ -134,23 +132,42 @@ def process_request_objs(list_of_request_objects):
     return five_tuple_of_all_lists
 
 
-two, five, ten, fifteen, fifteen_plus = process_request_objs(REQUEST_OBJS)
+# TODO: make an everage of weekdays. # requests on a given weekday / number of that weekday in data set
+def build_chart():
+    # plt.xkcd()
+    two, five, ten, fifteen, fifteen_plus = process_request_objs(REQUEST_OBJS)
+    x_axis_length = len(two)
+    x = np.arange(x_axis_length)
+    y = np.row_stack((two, five, ten, fifteen, fifteen_plus))
 
-x_axis_length = len(two)
+    # fig, ax = plt.subplots()
+    # ax.stackplot(x, y, labels=('1-2', '3-5', '5-10', '10-15', '15+'))
 
-x = np.arange(x_axis_length)
+    plt.stackplot(x, two, color="g", colors="g")  # , label="2")
+    plt.stackplot(x, five, color="y", colors="y")  # , label="5")
+    plt.stackplot(x, ten, color="b", colors="b")  # , label="10")
+    plt.stackplot(x, fifteen, color="r", colors="red")  # , label="15")
+    plt.stackplot(x, fifteen_plus, color="000000", colors="000000")  # , label="15+")
 
-y = np.row_stack((two, five, ten, fifteen, fifteen_plus))
+    # labels work with plot, but not with stackplot. Build custom legend.
+    two_label = "1-2"
+    five_label = "3-5"
+    ten_label = "5-10"
+    fifteen_label = "10-15"
+    fifteen_plus_label = "15+"
 
-# fig, ax = plt.subplots()
-# ax.stackplot(x, y, labels=('1-2', '3-5', '5-10', '10-15', '15+'))
-# labels work with plot, but not with stackplot
-plt.stackplot(x, two, color="blue", colors="blue")  # , label="2")
-plt.stackplot(x, five, color="green", colors="green")  # , label="5")
-plt.stackplot(x, ten, color="yellow", colors="yellow")  # , label="10")
-plt.stackplot(x, fifteen, color="red", colors="red")  # , label="15")
-plt.stackplot(x, fifteen_plus, color="000000", colors="000000")  # , label="15+")
+    p1 = mpatches.Rectangle((0, 0), 1, 1, fc="g")
+    p2 = mpatches.Rectangle((0, 0), 1, 1, fc="y")
+    p3 = mpatches.Rectangle((0, 0), 1, 1, fc="b")
+    p4 = mpatches.Rectangle((0, 0), 1, 1, fc="r")
+    p5 = mpatches.Rectangle((0, 0), 1, 1, fc="000000")
 
-plt.show()
+    plt.legend([p1, p2, p3, p4, p5], [two_label, five_label, ten_label, fifteen_label, fifteen_plus_label])
+
+    plt.show()
+
+
+build_objs(reader)
+build_chart()
 
 # TODO: add stats output
