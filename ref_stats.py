@@ -1,27 +1,36 @@
-import sys
+import sys, csv, threading
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import csv
 from datetime import datetime
 
+# One chart for each entry. Valid input is date: "02-22-2016", all: "all", or day name: "mondays"
+DAYS = ["all", "mondays", "02-22-2016"]
+
 filename = sys.argv[1]
+# filename = "times.csv" # For testing
 reader = csv.reader(open(filename))
 
+FIFTEEN_PLUS = 30
 REQUEST_OBJS = []
 TWO_MINS = []
 FIVE_MINS = []
 TEN_MINS = []
 FIFTEEN_MINS = []
 FIFTEEN_PLUS_MINS = []
-DAY = "all"  # Enter single days in format: "02-22-2016". If you want all days , put "all".
+LIST_OF_FIGURES = []
 OPEN_HOUR = 7  # 7:45 to be exact
+
+location_count = {}
+duration_count = {}
+time_block_count = {}
 
 
 class RequestObj(object):
     def __init__(self, location, duration_entry, question_content, time_block, datetime_obj, obj_id):
         self.day = None  # this will be changed when mins are set
         self.datetime = datetime_obj
+        self.day_of_week = datetime_obj.weekday()
         self.duration_entry = duration_entry
         self.duration_unit = self.format_duration_unit(duration_entry)
         self.min_unit = self.process_datetime_to_mins()
@@ -53,7 +62,7 @@ class RequestObj(object):
             duration_unit = 15
             FIFTEEN_MINS.append(self)
         elif "15+" in duration_entry:
-            duration_unit = 20
+            duration_unit = FIFTEEN_PLUS
             FIFTEEN_PLUS_MINS = []
         else:
             print "Error: improperly formatted duration entry:", self.datetime, duration_entry
@@ -67,20 +76,52 @@ class RequestObj(object):
         return relevant_times
 
 
-def build_objs(rdr):
+def get_duration(t):
+    hour = int(t.strftime('%H'))
+
+    if hour == 7 or hour == 8:
+        return '7:45-9:00 am'
+    elif hour == 9:
+        return '9-10 am'
+    elif hour == 10:
+        return '10-11 am'
+    elif hour == 11:
+        return '11 am-12 pm'
+    elif hour == 12:
+        return '12-1 pm'
+    elif hour == 13:
+        return '1-2 pm'
+    elif hour == 14:
+        return '2-3 pm'
+    elif hour == 15:
+        return '3-4 pm'
+    elif hour == 16:
+        return '4-5 pm'
+    elif hour == 17:
+        return '5-6 pm'
+    elif hour == 18:
+        return '6-7 pm'
+    elif hour == 19:
+        return '7-7:45 pm'
+    else:
+        return ''
+
+
+def build_objs(spreadsheet):
     obj_id = -1
     firstline = True
-    for row in rdr:
-        # skip first row, it's the header.
+    for row in spreadsheet:
+        # Skip the first row, it's the header.
         if firstline:
             firstline = False
             continue
+
         location = row[2]
         duration_entry = row[3]
         question_content = row[4]
-        time_block = row[8]
         time = datetime.strptime(row[0], '%m/%d/%Y %H:%M:%S')
-        obj_id += 1
+        time_block = row[8] if len(row[8]) > 0 else get_duration(time)
+
         REQUEST_OBJS.append(RequestObj(location,
                                        duration_entry,
                                        question_content,
@@ -88,10 +129,30 @@ def build_objs(rdr):
                                        time,
                                        obj_id
                                        ))
+        obj_id += 1
+
+        # Create dicts of counts for stats
+        # TODO: move this into a stats function and build counts based only on time frame (not all data)
+        location_count[location] = location_count.get(location, 1) + 1
+        duration_count[duration_entry] = duration_count.get(duration_entry, 1) + 1
+        time_block_count[time_block] = time_block_count.get(time_block, 1) + 1
 
 
-def process_request_objs(list_of_request_objects):
-    global DAY
+def create_graph_for_day(day):
+    global REQUEST_OBJS
+
+    target_day_of_week = None
+    if day in ["mondays", "tuesdays", "wednesdays", "thursdays", "fridays"]:
+        if day in ["mondays"]:
+            target_day_of_week = 0
+        elif day in ["tuesdays"]:
+            target_day_of_week = 1
+        elif day in ["wednesdays"]:
+            target_day_of_week = 2
+        elif day in ["thursdays"]:
+            target_day_of_week = 3
+        elif day in ["fridays"]:
+            target_day_of_week = 4
 
     two_list = [0] * 12 * 60
     five_list = [0] * 12 * 60
@@ -103,25 +164,46 @@ def process_request_objs(list_of_request_objects):
         5: five_list,
         10: ten_list,
         15: fifteen_list,
-        20: fifteen_plus_list
+        FIFTEEN_PLUS: fifteen_plus_list
     }
-    for obj in list_of_request_objects:
-        if not DAY in [obj.day, "all"]:
+    days_included_in_screen_set = set([])
+    total_days_in_screen = None
+    for obj in REQUEST_OBJS:
+        if day == "all":
+            pass
+        elif target_day_of_week is not None:
+            if obj.day_of_week != target_day_of_week:
+                continue
+        elif day != obj.day:
             continue
+        elif day == obj.day:
+            pass
+        else:
+            print "Error: day variable improperly formatted"
 
-        relevant_list = list_dict[obj.duration_unit]
+        relevant_duration_list = list_dict[obj.duration_unit]
 
-        if relevant_list is None:
+        days_included_in_screen_set.add(obj.day)
+        total_days_in_screen = len(days_included_in_screen_set)
+
+        if relevant_duration_list is None:
             print "Error: relvant_list is None"
 
         for time_unit in obj.relevant_times_list:
-            # print relevant_list
-            if time_unit < len(relevant_list):
-                relevant_list[time_unit] += 1
+            # print relevant_duration_list
+            if time_unit < len(relevant_duration_list):
+                relevant_duration_list[time_unit] += 1
             else:
                 # print time_unit
-                # print len(relevant_list), "\n"
+                # print len(relevant_duration_list), "\n"
                 pass
+    if total_days_in_screen:
+        total_days_in_screen = float(total_days_in_screen)
+        two_list = [x / total_days_in_screen for x in two_list]
+        five_list = [x / total_days_in_screen for x in five_list]
+        ten_list = [x / total_days_in_screen for x in ten_list]
+        fifteen_list = [x / total_days_in_screen for x in fifteen_list]
+        fifteen_plus_list = [x / total_days_in_screen for x in fifteen_plus_list]
 
     five_tuple_of_all_lists = (np.array(two_list),
                                np.array(five_list),
@@ -129,42 +211,66 @@ def process_request_objs(list_of_request_objects):
                                np.array(fifteen_list),
                                np.array(fifteen_plus_list)
                                )
-    return five_tuple_of_all_lists
 
+    two, five, ten, fifteen, fifteen_plus = five_tuple_of_all_lists
 
-def build_chart():
-    # plt.xkcd()
-    two, five, ten, fifteen, fifteen_plus = process_request_objs(REQUEST_OBJS)
     x_axis_length = len(two)
+
     x = np.arange(x_axis_length)
+
     y = np.row_stack((two, five, ten, fifteen, fifteen_plus))
 
-    plt.stackplot(x, two, color="g", colors="g")
-    plt.stackplot(x, five, color="y", colors="y")
-    plt.stackplot(x, ten, color="b", colors="b")
-    plt.stackplot(x, fifteen, color="r", colors="red")
+    plt.figure(DAYS.index(day))
+    plt.stackplot(x, two, color="b", colors="b")
+    plt.stackplot(x, five, color="g", colors="g")
+    plt.stackplot(x, ten, color="y", colors="y")
+    plt.stackplot(x, fifteen, color="r", colors="r")
     plt.stackplot(x, fifteen_plus, color="000000", colors="000000")
+    plt.suptitle(str.title(day), fontsize=22)
 
-    # The fill_between() command in stackplot creates a PolyCollection that is not supported by the legend() command.
+    # Build legend
+    # The fill_between() command in stackplot creates a PolyCollection that is not supported by the legend() command,
+    # therefore we have to manually build it
+
     two_label = "1-2"
     five_label = "3-5"
     ten_label = "5-10"
     fifteen_label = "10-15"
     fifteen_plus_label = "15+"
 
-    p1 = mpatches.Rectangle((0, 0), 1, 1, fc="g")
-    p2 = mpatches.Rectangle((0, 0), 1, 1, fc="y")
-    p3 = mpatches.Rectangle((0, 0), 1, 1, fc="b")
-    p4 = mpatches.Rectangle((0, 0), 1, 1, fc="r")
-    p5 = mpatches.Rectangle((0, 0), 1, 1, fc="000000")
+    label1 = mpatches.Rectangle((0, 0), 1, 1, fc="g")
+    label2 = mpatches.Rectangle((0, 0), 1, 1, fc="y")
+    label3 = mpatches.Rectangle((0, 0), 1, 1, fc="b")
+    label4 = mpatches.Rectangle((0, 0), 1, 1, fc="r")
+    label5 = mpatches.Rectangle((0, 0), 1, 1, fc="000000")
 
-    plt.legend([p1, p2, p3, p4, p5], [two_label, five_label, ten_label, fifteen_label, fifteen_plus_label])
+    plt.legend([label1, label2, label3, label4, label5],
+               [two_label, five_label, ten_label, fifteen_label, fifteen_plus_label], loc='best', shadow=True)
 
+
+def build_chart():
+    for day in reversed(DAYS):
+        create_graph_for_day(day)
     plt.show()
 
 
+def print_stats():
+    dicts = (time_block_count.items(), location_count.items(), duration_count.items())
+    # TODO: order the output of timeblocks, durations, and location properly
+    for d in dicts:
+        print '#' * 100
+        for k, v in d:
+            print v, "---> ", k
+    print '#' * 100
+
 build_objs(reader)
+print_stats()
 build_chart()
 
-# TODO: add stats output
-# TODO: plot 5 charts. One for each day of the week, averaged out. Make x-axis label working hours of the day.
+# TODO: Enhance stats output and att it to bottom of charts
+# TODO: account for Friday's closing early and  being open on Saturdays.
+# FALL & SPRING SEMESTER HOURS
+# Monday - Thursday: 7:45am - 7:45pm
+# Friday: 7:45am - 2:45pm
+# Saturday: 10am - 1:45pm
+# Sunday: Closed
