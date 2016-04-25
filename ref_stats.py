@@ -256,18 +256,25 @@ def build_chart():
 
 def print_stats():
     dicts = (time_block_count.items(), location_count.items(), duration_count.items())
+    total = 0
     # TODO: order the output of timeblocks, durations, and location properly
+    # Currently sorting by highest count
     for d in dicts:
+        for i in d:
+            total += int(i[1])
+
         print '#' * 100
-        for k, v in d:
-            print v, "---> ", k
+        for k, v in sorted(d, key=lambda x: int(x[1]), reverse=True):
+            print k[:11], "\t--->  Percent: ", "{0:.0f}%".format(float(v) / total * 100), "--->  Count: ", v
+
     print '#' * 100
+
 
 build_objs(reader)
 print_stats()
 build_chart()
 
-# TODO: Enhance stats output and att it to bottom of charts
+# TODO: Enhance stats output and add it to bottom of charts
 # TODO: account for Friday's closing early and  being open on Saturdays.
 # FALL & SPRING SEMESTER HOURS
 # Monday - Thursday: 7:45am - 7:45pm
