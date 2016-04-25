@@ -3,3 +3,5 @@
 Statistics and visualization for City College of San Francisco's reference desk.
 
 *TODO: add a better description*
+
+![alt text](chart.gif "All data chart")
