@@ -11,7 +11,7 @@ filename = sys.argv[1]
 # filename = "times.csv" # For testing
 reader = csv.reader(open(filename))
 
-FIFTEEN_PLUS = 30
+FIFTEEN_PLUS = 30 # time alloted to tasks that take "15+ minutes" in minutes
 REQUEST_OBJS = []
 TWO_MINS = []
 FIVE_MINS = []
@@ -142,7 +142,7 @@ def create_graph_for_day(day):
     global REQUEST_OBJS
 
     target_day_of_week = None
-    if day in ["mondays", "tuesdays", "wednesdays", "thursdays", "fridays"]:
+    if day in ["mondays", "tuesdays", "wednesdays", "thursdays", "fridays", "saturdays"]:
         if day in ["mondays"]:
             target_day_of_week = 0
         elif day in ["tuesdays"]:
@@ -153,6 +153,8 @@ def create_graph_for_day(day):
             target_day_of_week = 3
         elif day in ["fridays"]:
             target_day_of_week = 4
+        elif day in ["saturdays"]:
+            target_day_of_week = 5
 
     two_list = [0] * 12 * 60
     five_list = [0] * 12 * 60
@@ -246,6 +248,24 @@ def create_graph_for_day(day):
 
     plt.legend([label1, label2, label3, label4, label5],
                [two_label, five_label, ten_label, fifteen_label, fifteen_plus_label], loc='best', shadow=True)
+
+    locs, labels = plt.xticks()
+    #print(locs, labels)
+
+    plt.xticks( np.arange(9),
+           ('7:45',
+            '9:15',
+            '10:45',
+            '12:15',
+            '1:45',
+            '3:15',
+            '4:45',
+            '6:15',
+            '7:45',
+            ) )
+    #print labels
+    plt.xticks(locs, labels)
+
 
 
 def build_chart():
