@@ -20,6 +20,7 @@ FIFTEEN_MINS = []
 FIFTEEN_PLUS_MINS = []
 LIST_OF_FIGURES = []
 OPEN_HOUR = 7  # 7:45 to be exact
+OPEN_MINUTE = 45
 
 location_count = {}
 duration_count = {}
@@ -43,9 +44,11 @@ class RequestObj(object):
         self.day = this_day
         this_min = int(my_datetime.strftime('%M'))
         this_hour = int(my_datetime.strftime('%H'))
+        #print this_hour, this_min
         formatted_hour = this_hour - OPEN_HOUR
+        formatted_min = this_min - OPEN_MINUTE
         this_hour_in_mins = formatted_hour * 60
-        formatted_mins = this_hour_in_mins + this_min
+        formatted_mins = this_hour_in_mins + formatted_min
         return formatted_mins
 
     def format_duration_unit(self, duration_entry):
@@ -161,6 +164,8 @@ def create_graph_for_day(day):
     ten_list = [0] * 12 * 60
     fifteen_list = [0] * 12 * 60
     fifteen_plus_list = [0] * 12 * 60
+    list_of_duration_lists = [two_list, five_list, ten_list, fifteen_list, fifteen_plus_list]
+
     list_dict = {
         2: two_list,
         5: five_list,
@@ -192,13 +197,13 @@ def create_graph_for_day(day):
             print "Error: relvant_list is None"
 
         for time_unit in obj.relevant_times_list:
-            # print relevant_duration_list
+            #print relevant_duration_list
             if time_unit < len(relevant_duration_list):
                 relevant_duration_list[time_unit] += 1
             else:
-                # print time_unit
-                # print len(relevant_duration_list), "\n"
+                #print time_unit, len(relevant_duration_list), "\n"
                 pass
+
     if total_days_in_screen:
         total_days_in_screen = float(total_days_in_screen)
         two_list = [x / total_days_in_screen for x in two_list]
@@ -207,14 +212,11 @@ def create_graph_for_day(day):
         fifteen_list = [x / total_days_in_screen for x in fifteen_list]
         fifteen_plus_list = [x / total_days_in_screen for x in fifteen_plus_list]
 
-    five_tuple_of_all_lists = (np.array(two_list),
-                               np.array(five_list),
-                               np.array(ten_list),
-                               np.array(fifteen_list),
-                               np.array(fifteen_plus_list)
-                               )
-
-    two, five, ten, fifteen, fifteen_plus = five_tuple_of_all_lists
+    two     = np.array(two_list)
+    five    = np.array(five_list),
+    ten     = np.array(ten_list),
+    fifteen = np.array(fifteen_list),
+    fifteen_plus = np.array(fifteen_plus_list)
 
     x_axis_length = len(two)
 
@@ -223,11 +225,12 @@ def create_graph_for_day(day):
     y = np.row_stack((two, five, ten, fifteen, fifteen_plus))
 
     plt.figure(DAYS.index(day))
-    plt.stackplot(x, two, color="b", colors="b")
-    plt.stackplot(x, five, color="g", colors="g")
-    plt.stackplot(x, ten, color="y", colors="y")
+
+    plt.stackplot(x, two, color="limegreen", colors="g")
+    plt.stackplot(x, five, color="b", colors="b")
+    plt.stackplot(x, ten, color="yellow", colors="yellow")
     plt.stackplot(x, fifteen, color="r", colors="r")
-    plt.stackplot(x, fifteen_plus, color="000000", colors="000000")
+    plt.stackplot(x, fifteen_plus, color="dimgray", colors="k") # k = black
     plt.suptitle(str.title(day), fontsize=22)
 
     # Build legend
@@ -241,10 +244,10 @@ def create_graph_for_day(day):
     fifteen_plus_label = "15+"
 
     label1 = mpatches.Rectangle((0, 0), 1, 1, fc="g")
-    label2 = mpatches.Rectangle((0, 0), 1, 1, fc="y")
-    label3 = mpatches.Rectangle((0, 0), 1, 1, fc="b")
+    label2 = mpatches.Rectangle((0, 0), 1, 1, fc="b")
+    label3 = mpatches.Rectangle((0, 0), 1, 1, fc="yellow")
     label4 = mpatches.Rectangle((0, 0), 1, 1, fc="r")
-    label5 = mpatches.Rectangle((0, 0), 1, 1, fc="000000")
+    label5 = mpatches.Rectangle((0, 0), 1, 1, fc="k") # k = black
 
     plt.legend([label1, label2, label3, label4, label5],
                [two_label, five_label, ten_label, fifteen_label, fifteen_plus_label], loc='best', shadow=True)
@@ -252,19 +255,22 @@ def create_graph_for_day(day):
     locs, labels = plt.xticks()
     #print(locs, labels)
 
-    plt.xticks( np.arange(9),
-           ('7:45',
-            '9:15',
-            '10:45',
-            '12:15',
-            '1:45',
-            '3:15',
-            '4:45',
-            '6:15',
-            '7:45',
+    plt.xticks( np.arange(8),
+           (
+            "7:45",
+            "9:25",
+            "11:05",
+            "12:45",
+            "2:25",
+            "4:05",
+            "5:45",
+            "7:25",
             ) )
+
     #print labels
     plt.xticks(locs, labels)
+    plt.xlim(0, 720)
+
 
 
 
@@ -289,10 +295,26 @@ def print_stats():
 
     print '#' * 100
 
+def convert_time_unit_to_time(raw_minute):
+    #start at 7:45 = 0, so we need to subtract
+    raw = raw_minute
+    if raw < 15:
+        h, m = -1, 45+raw
+    zeroed = raw - 15 # set the minute to 0
+    h, m = divmod(zeroed, 60)
+    h = h+8
+    if h > 12:
+        h = h - 12
+    if m < 10:
+        return str(h)+":0"+str(m)
+    else:
+        return str(h)+":"+str(m)
+
 
 build_objs(reader)
 print_stats()
 build_chart()
+
 
 # TODO: Enhance stats output and add it to bottom of charts
 # TODO: account for Friday's closing early and  being open on Saturdays.
