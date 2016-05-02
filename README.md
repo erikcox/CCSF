@@ -20,7 +20,7 @@ _ex)_ `DAYS = ["all", "mondays", "02-22-2016"]`
 ![alt text](chart1.gif "Single day chart")
 ![alt text](chart2.gif "All Mondays")
 ![alt text](chart3.gif "All data chart")
-![alt text](stats.gif "Stats output")
+![alt text](stats1.gif "Stats output")
 
 ## Contributing
 1. Fork it!
