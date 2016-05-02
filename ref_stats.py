@@ -283,7 +283,7 @@ def build_chart():
 def print_stats():
     dicts = (time_block_count.items(), location_count.items(), duration_count.items())
     total = 0
-    # TODO: order the output of timeblocks, durations, and location properly
+    # TODO: order the output of timeblocks, durations, and location properly. Add question content.
     # Currently sorting by highest count
     for d in dicts:
         for i in d:
